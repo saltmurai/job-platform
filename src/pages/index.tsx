@@ -5,25 +5,7 @@ import { useEffect, useState } from "react";
 
 const inter = Inter({ subsets: ["latin"] });
 
-export default function Home() {
-  const [jobs, setJobs] = useState<any>([]);
-  useEffect(() => {
-    async function getJobs() {
-      try {
-        const records = await pb.collection("jobs").getFullList();
-        const recordsWithImageUrl = records.map((record: any) => {
-          const image = record.image;
-          const imageURL = pb.getFileUrl(record, image);
-          console.log(imageURL);
-          return { ...record, image: imageURL };
-        });
-        setJobs(recordsWithImageUrl);
-      } catch (e: any) {
-        console.log(e);
-      }
-    }
-    getJobs();
-  }, []);
+export default function Home({ data }: { data: any }) {
   return (
     <main
       className={`flex min-h-screen flex-col items-center p-24 ${inter.className}`}
@@ -45,7 +27,7 @@ export default function Home() {
         </div>
       </div>
       <div className="w-full flex flex-wrap gap-4">
-        {jobs.map((job: any) => (
+        {data.map((job: any) => (
           <JobCard
             key={job.id}
             title={job.title}
@@ -63,4 +45,25 @@ export default function Home() {
       {/* <JobCard /> */}
     </main>
   );
+}
+
+export async function getServerSideProps() {
+  // Fetch data from external API
+  let data;
+  try {
+    const records = await pb.collection("jobs").getFullList();
+    const recordsWithImageUrl = records.map((record: any) => {
+      const image = record.image;
+      const imageURL = pb.getFileUrl(record, image);
+      return { ...record, image: imageURL };
+    });
+    data = recordsWithImageUrl;
+  } catch (e: any) {
+    console.log(e);
+    return {
+      notFound: true,
+    };
+  }
+  // Pass data to the page via props
+  return { props: { data } };
 }
